@@ -4,24 +4,41 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    println!("cargo:rustc-link-search=/usr/include/blockdev");
-    println!("cargo:rustc-link-search=/usr/include/glib-2.0");
-    println!("cargo:rustc-link-search=/usr/lib64/glib-2.0/include");
+    let blockdev = pkg_config::Config::new()
+        .atleast_version("2.25")
+        .probe("blockdev")
+        .expect("need blockdev version 2.25 headers");
 
+    let includes: Vec<String> = blockdev
+        .include_paths
+        .iter()
+        .map(|path| format!("{}", path.to_string_lossy()))
+        .collect();
 
-    println!("cargo:rustc-link-lib=blockdev");
+    for include in includes.iter() {
+        println!("cargo:rustc-link-search={}", include)
+    }
+
+    let libs: Vec<String> = blockdev
+        .libs
+        .iter()
+        .map(|lib| format!("{}", lib.as_str()))
+        .collect();
+
+    for lib in libs.iter() {
+        println!("cargo:rustc-link-lib={}", lib)
+    }
     println!("cargo:rustc-link-lib=bd_fs");
     println!("cargo:rerun-if-changed=wrapper.h");
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
-        .clang_arg("-I/usr/include/glib-2.0")
-        .clang_arg("-I/usr/lib64/glib-2.0/include")
+        .clang_args(includes.iter().map(|path| format!("-I{}", path)))
         .generate()
         .expect("unable to generate bindings");
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings.write_to_file(out_path.join("bindings.rs"))
+    bindings
+        .write_to_file(out_path.join("bindings.rs"))
         .expect("couldn't write bindings");
-
 }

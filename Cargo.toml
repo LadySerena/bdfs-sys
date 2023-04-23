@@ -3,8 +3,7 @@ name = "bdfs-sys"
 version = "0.1.0"
 edition = "2021"
 build = "build.rs"
-license-file = "LICENSE"
-license = "LGPL-2.1"
+license = "LGPL-2.1-or-later"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,3 +11,4 @@ license = "LGPL-2.1"
 
 [build-dependencies]
 bindgen = "0.61.0"
+pkg-config = "0.3.26"
